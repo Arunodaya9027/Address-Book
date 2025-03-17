@@ -3,7 +3,10 @@ package com.example.addressbook.service;
 import com.example.addressbook.dto.AddressBookDTO;
 import com.example.addressbook.interfaces.IAddressBookService;
 import com.example.addressbook.model.AddressBook;
+import com.example.addressbook.model.UserAuthentication;
 import com.example.addressbook.repository.AddressBookRepository;
+import com.example.addressbook.repository.UserAuthenticationRepository;
+import com.example.addressbook.util.SecurityUtil;
 import org.hibernate.annotations.Cache;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +14,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * AddressBookService class implements IAddressBookService interface
@@ -22,6 +26,10 @@ public class AddressBookService implements IAddressBookService {
     @Autowired
     AddressBookRepository addressBookRepository;    // Injecting AddressBookRepository to perform CRUD operations
 
+    @Autowired
+    UserAuthenticationRepository userAuthenticationRepository;
+
+    @Autowired
     ModelMapper modelMapper = new ModelMapper();    // ModelMapper to map DTOs to entities and vice versa
 
     /**
@@ -31,9 +39,12 @@ public class AddressBookService implements IAddressBookService {
      * @return List<AddressBookDTO> - List of AddressBookDTO
      */
     @Override
-    @Cacheable(value = "addressBookCache")
-    public List<AddressBookDTO> getAddressBookData() {
-        List<AddressBook> addressBooksLists = addressBookRepository.findAll();
+//    @Cacheable(value = "addressBookCache")
+    public List<AddressBookDTO> getMyAddressBookData() {
+        String email = SecurityUtil.getAuthenticatedUserEmail();
+        UserAuthentication user = userAuthenticationRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        List<AddressBook> addressBooksLists = addressBookRepository.findByUser(user.getUserId()); // Fetch address books by email
         return addressBooksLists.stream()
                 .map(addressBook -> modelMapper.map(addressBook, AddressBookDTO.class))
                 .toList();
@@ -47,9 +58,15 @@ public class AddressBookService implements IAddressBookService {
      * @return AddressBookDTO - The address book entry with the specified ID
      */
     @Override
-    @Cacheable(value = "addressBookCache", key = "#id")
+//    @Cacheable(value = "addressBookCache", key = "#id")
     public AddressBookDTO getAddressBookDataById(long id) {
-        AddressBook addressBook = addressBookRepository.findById(id).orElseThrow(() -> new RuntimeException("Employee Payroll not found with id: " + id));
+        String email = SecurityUtil.getAuthenticatedUserEmail();
+        UserAuthentication user = userAuthenticationRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        AddressBook addressBook = addressBookRepository.findById(id).orElseThrow(() -> new RuntimeException("Address Data not found with id: " + id));
+        if(!Objects.equals(addressBook.getUser().getUserId(), user.getUserId())) {
+            throw new RuntimeException("Can't Access Address Book Data with id: " + id + ". You are not the owner of that data");
+        }
         return modelMapper.map(addressBook, AddressBookDTO.class);
     }
 
@@ -62,7 +79,14 @@ public class AddressBookService implements IAddressBookService {
      */
     @Override
     public AddressBookDTO createAddressBookData(AddressBookDTO addressBookDTO) {
-        AddressBook addressBook = addressBookRepository.save(modelMapper.map(addressBookDTO, AddressBook.class));
+        String email = SecurityUtil.getAuthenticatedUserEmail();
+        UserAuthentication user = userAuthenticationRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        AddressBook addressBook = modelMapper.map(addressBookDTO, AddressBook.class);
+        addressBook.setUser(user);
+
+        addressBook = addressBookRepository.save(addressBook); // Save the address book entry to the database
         return modelMapper.map(addressBook, AddressBookDTO.class);
     }
 
@@ -77,7 +101,14 @@ public class AddressBookService implements IAddressBookService {
     @Override
     public boolean updateAddressBookData(long id, AddressBookDTO updatedAddressBookDTO) {
         try {
-            AddressBook addressBook = addressBookRepository.findById(id).orElseThrow(() -> new RuntimeException("Employee Payroll not found with id: " + id));
+            String email = SecurityUtil.getAuthenticatedUserEmail();
+            UserAuthentication user = userAuthenticationRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+            AddressBook addressBook = addressBookRepository.findById(id).orElseThrow(() -> new RuntimeException("Address Book not found with id: " + id));
+            if(!Objects.equals(addressBook.getUser().getUserId(), user.getUserId())) {
+                throw new RuntimeException("Can't Modified Address Book Data with id: " + id + ". You are not the owner of that data");
+            }
             addressBook.setFirstName(updatedAddressBookDTO.getFirstName());
             addressBook.setLastName(updatedAddressBookDTO.getLastName());
             addressBook.setAddress(updatedAddressBookDTO.getAddress());
@@ -100,7 +131,22 @@ public class AddressBookService implements IAddressBookService {
         try {
             addressBookRepository.deleteById(id);
         } catch (Exception e) {
-            throw new RuntimeException("Employee Payroll not found with id: " + id);
+            throw new RuntimeException("Address Book not found with id: " + id);
         }
+    }
+
+    /**
+     * This method retrieves all address book entries from the database.
+     * It maps each AddressBook entity to AddressBookDTO and returns a list of AddressBookDTO.
+     *
+     * @return List<AddressBookDTO> - List of AddressBookDTO
+     */
+    @Override
+//    @Cacheable(value = "addressBookCache")
+    public List<AddressBookDTO> getAllAddressBookData() {
+        List<AddressBook> addressBooksLists = addressBookRepository.findAll(); // Fetch all address books
+        return addressBooksLists.stream()
+                .map(addressBook -> modelMapper.map(addressBook, AddressBookDTO.class))
+                .toList();
     }
 }

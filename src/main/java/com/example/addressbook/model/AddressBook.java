@@ -2,6 +2,7 @@ package com.example.addressbook.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "ADDRESS_BOOK")
+@Builder
 public class AddressBook {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,10 +30,14 @@ public class AddressBook {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String email;
 
     private String address;
 
-    private long phoneNumber;
+    private String phoneNumber;
+
+    @ManyToOne(fetch = FetchType.LAZY)  // Lazy loading to optimize performance.
+    @JoinColumn(name = "user_id", nullable = false)  // Links contacts to a specific user
+    private UserAuthentication user;
 }

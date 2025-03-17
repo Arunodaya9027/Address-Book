@@ -8,6 +8,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ public class JwtToken {
     Environment env;    // Environment is used to access secret credentials and properties from environment variables.
 
     private static String TOKEN_SECRET;
+    private static long EXPIRATION_TIME = 10 * 60 * 1000;
 
     /**
      * This method is called after the bean is created.
@@ -31,37 +33,9 @@ public class JwtToken {
      */
     @PostConstruct
     public void init() {
-        TOKEN_SECRET = env.getProperty("CLIENT_SECRET");
+//        TOKEN_SECRET = env.getProperty("CLIENT_SECRET");
+        TOKEN_SECRET = "Lock";
     }
-
-    /**
-     * This method creates a JWT token with the given user ID and role.
-     * It uses HMAC256 algorithm for signing the token.
-     *
-     * @param id   - The user ID
-     * @param role - The user role
-     * @return String - The generated JWT token
-     */
-    public String createToken(Long id, String role)  {
-        try {
-            Algorithm algorithm = Algorithm.HMAC256(TOKEN_SECRET);  // HMAC256 algorithm for signing the token
-
-            String token = JWT.create()// Creating a new JWT token
-                    .withSubject(id.toString())             // Setting the subject of the token to user ID
-                    .withClaim("role", role)          // Setting the role claim
-                    .withIssuedAt(new Date())
-                    .withExpiresAt(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
-                    .sign(algorithm);                       // Signing the token with the algorithm
-            return token;
-
-        } catch (JWTCreationException exception) {
-            exception.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
 
     /**
      * This method creates a JWT token with the given email and role.
@@ -79,7 +53,7 @@ public class JwtToken {
                     .withSubject(email)             // Setting the subject of the token to user ID
                     .withClaim("role", role)          // Setting the role claim
                     .withIssuedAt(new Date())
-                    .withExpiresAt(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
+                    .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                     .sign(algorithm);                       // Signing the token with the algorithm
             return token;
 
