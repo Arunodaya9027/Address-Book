@@ -6,16 +6,21 @@ import com.example.addressbook.model.AddressBook;
 import com.example.addressbook.model.UserAuthentication;
 import com.example.addressbook.repository.AddressBookRepository;
 import com.example.addressbook.repository.UserAuthenticationRepository;
+import com.example.addressbook.util.JwtToken;
 import com.example.addressbook.util.SecurityUtil;
 import org.hibernate.annotations.Cache;
+import jakarta.servlet.http.HttpServletRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AddressBookService class implements IAddressBookService interface
@@ -33,6 +38,12 @@ public class AddressBookService implements IAddressBookService {
     @Autowired
     ModelMapper modelMapper = new ModelMapper();    // ModelMapper to map DTOs to entities and vice versa
 
+    @Autowired
+    RedisTemplate<String, Object> redisTemplate; // RedisTemplate to interact with Redis cache
+
+    @Autowired
+    JwtToken jwtToken; // JWT token for authentication
+
     /**
      * This method retrieves all address book entries from the database.
      * It maps each AddressBook entity to AddressBookDTO and returns a list of AddressBookDTO.
@@ -41,7 +52,7 @@ public class AddressBookService implements IAddressBookService {
      */
     @Override
     @Cacheable(value = "addressBookCache")
-    public List<AddressBookDTO> getMyAddressBookData() {
+    public List<AddressBookDTO> getMyAddressBookData(HttpServletRequest request) {
         String email = SecurityUtil.getAuthenticatedUserEmail();
         UserAuthentication user = userAuthenticationRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
@@ -60,7 +71,16 @@ public class AddressBookService implements IAddressBookService {
      */
     @Override
     @Cacheable(value = "addressBookCache", key = "#id")
-    public AddressBookDTO getAddressBookDataById(long id) {
+    public AddressBookDTO getAddressBookDataById(HttpServletRequest request, long id) {
+        String sessionToken = request.getHeader("sessionToken");
+        // Decode JWT to get expiration
+        Date expiryDate = jwtToken.getTokenExpiry(sessionToken);
+        long ttl = calculateTTL(expiryDate);
+
+        // Manually set TTL in Redis
+        redisTemplate.expire("addressBookCache::" + id, ttl, TimeUnit.SECONDS);
+
+
         String email = SecurityUtil.getAuthenticatedUserEmail();
         UserAuthentication user = userAuthenticationRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
@@ -69,6 +89,12 @@ public class AddressBookService implements IAddressBookService {
             throw new RuntimeException("Can't Access Address Book Data with id: " + id + ". You are not the owner of that data");
         }
         return modelMapper.map(addressBook, AddressBookDTO.class);
+    }
+
+    private long calculateTTL(Date expiryDate) {
+        long currentTime = System.currentTimeMillis();
+        long expiryTime = expiryDate.getTime();
+        return (expiryTime - currentTime) / 1000;  // TTL in seconds
     }
 
     /**
