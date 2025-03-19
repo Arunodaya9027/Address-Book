@@ -176,6 +176,12 @@ public class AddressBookService implements IAddressBookService {
     @Override
 //    @Cacheable(value = "addressBookCache")
     public List<AddressBookDTO> getAllAddressBookData() {
+        String email = SecurityUtil.getAuthenticatedUserEmail();
+        UserAuthentication user = userAuthenticationRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        if (!user.getRole().equals("ADMIN")) {
+            throw new RuntimeException("You are not authorized to access this data");
+        }
         List<AddressBook> addressBooksLists = addressBookRepository.findAll(); // Fetch all address books
         return addressBooksLists.stream()
                 .map(addressBook -> modelMapper.map(addressBook, AddressBookDTO.class))

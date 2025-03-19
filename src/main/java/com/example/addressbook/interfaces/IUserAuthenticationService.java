@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 public interface IUserAuthenticationService {
     UserAuthenticationDTO register(UserAuthenticationDTO userDTO) throws Exception;
     String login(LoginDTO loginDTO) throws UserException;
-    String logout(String token) throws UserException;
     String forgotPassword(ForgotPasswordDTO forgotPasswordDTO) throws UserException;
     String resetPassword(String token, ResetPasswordDTO resetPasswordDTO) throws UserException;
     String changePassword(String token, ChangePasswordDTO changePasswordDTO) throws UserException;

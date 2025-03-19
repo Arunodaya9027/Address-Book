@@ -134,7 +134,6 @@ public class AddressBookController {
      * @return ResponseEntity with list of AddressBookDTO which contains all address book entries
      */
     @GetMapping("/all")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseDTO<?>> getAllAddressBook() {
         log.info("Fetching all address book entries for admin");
         try {

@@ -127,29 +127,6 @@ public class UserAuthenticationService implements IUserAuthenticationService {
         }
     }
 
-    /**
-     * This method logs out a user.
-     * It takes a JWT token as input and invalidates it.
-     *
-     * @param sessionToken - The JWT token of the user to be logged out.
-     * @return String - A success message.
-     * @throws UserException - If any error occurs during logout.
-     */
-    @Override
-    public String logout(String sessionToken) throws UserException {
-        if (tokenUtil.isTokenExpired(sessionToken))
-            throw new UserException("Session expired");
-
-        String email = tokenUtil.decodeToken(sessionToken);
-        Optional<UserAuthentication> user = existsByEmail(email);
-        if (user.isPresent()) {
-            redisTemplate.delete(tokenUtil.decodeToken(sessionToken));
-            return "Logout successfully!!";
-        } else {
-            throw new UserException("User not found");
-        }
-    }
-
 
     /**
      * This method resets the password for a user.
