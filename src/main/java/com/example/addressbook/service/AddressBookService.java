@@ -72,7 +72,7 @@ public class AddressBookService implements IAddressBookService {
     @Override
     @Cacheable(value = "addressBookCache", key = "#id")
     public AddressBookDTO getAddressBookDataById(HttpServletRequest request, long id) {
-        String sessionToken = request.getHeader("sessionToken");
+        String sessionToken = request.getHeader("Authorization").substring(7);
         // Decode JWT to get expiration
         Date expiryDate = jwtToken.getTokenExpiry(sessionToken);
         long ttl = calculateTTL(expiryDate);
