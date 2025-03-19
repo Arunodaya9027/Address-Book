@@ -33,8 +33,8 @@ public class JwtToken {
      */
     @PostConstruct
     public void init() {
-//        TOKEN_SECRET = env.getProperty("CLIENT_SECRET");
-        TOKEN_SECRET = "Lock";
+        TOKEN_SECRET = env.getProperty("CLIENT_SECRET");
+//        TOKEN_SECRET = "Lock";
     }
 
     /**

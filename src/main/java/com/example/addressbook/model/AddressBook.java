@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * AddressBook entity class representing the address book table in the database.
  * This class is used to map the address book data to the database.
@@ -19,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "ADDRESS_BOOK")
 @Builder
-public class AddressBook {
+public class AddressBook implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;

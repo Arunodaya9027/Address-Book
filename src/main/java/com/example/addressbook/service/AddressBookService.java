@@ -10,6 +10,7 @@ import com.example.addressbook.util.SecurityUtil;
 import org.hibernate.annotations.Cache;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +40,7 @@ public class AddressBookService implements IAddressBookService {
      * @return List<AddressBookDTO> - List of AddressBookDTO
      */
     @Override
-//    @Cacheable(value = "addressBookCache")
+    @Cacheable(value = "addressBookCache")
     public List<AddressBookDTO> getMyAddressBookData() {
         String email = SecurityUtil.getAuthenticatedUserEmail();
         UserAuthentication user = userAuthenticationRepository.findByEmail(email)
@@ -58,7 +59,7 @@ public class AddressBookService implements IAddressBookService {
      * @return AddressBookDTO - The address book entry with the specified ID
      */
     @Override
-//    @Cacheable(value = "addressBookCache", key = "#id")
+    @Cacheable(value = "addressBookCache", key = "#id")
     public AddressBookDTO getAddressBookDataById(long id) {
         String email = SecurityUtil.getAuthenticatedUserEmail();
         UserAuthentication user = userAuthenticationRepository.findByEmail(email)
@@ -78,6 +79,7 @@ public class AddressBookService implements IAddressBookService {
      * @return AddressBookDTO - The created address book entry
      */
     @Override
+    @CacheEvict(value = "addressBookCache", allEntries = true)
     public AddressBookDTO createAddressBookData(AddressBookDTO addressBookDTO) {
         String email = SecurityUtil.getAuthenticatedUserEmail();
         UserAuthentication user = userAuthenticationRepository.findByEmail(email)
@@ -99,6 +101,7 @@ public class AddressBookService implements IAddressBookService {
      * @return boolean - true if the update was successful, false otherwise
      */
     @Override
+    @CacheEvict(value = "addressBookCache", key = "#id")
     public boolean updateAddressBookData(long id, AddressBookDTO updatedAddressBookDTO) {
         try {
             String email = SecurityUtil.getAuthenticatedUserEmail();
@@ -112,6 +115,7 @@ public class AddressBookService implements IAddressBookService {
             addressBook.setFirstName(updatedAddressBookDTO.getFirstName());
             addressBook.setLastName(updatedAddressBookDTO.getLastName());
             addressBook.setAddress(updatedAddressBookDTO.getAddress());
+            addressBook.setEmail(updatedAddressBookDTO.getEmail());
             addressBook.setPhoneNumber(updatedAddressBookDTO.getPhoneNumber());
             addressBookRepository.save(addressBook);
             return true;
@@ -127,6 +131,7 @@ public class AddressBookService implements IAddressBookService {
      * @param id - The ID of the address book entry to be deleted
      */
     @Override
+    @CacheEvict(value = "addressBookCache", allEntries = true)
     public void deleteAddressBookData(long id) {
         try {
             addressBookRepository.deleteById(id);

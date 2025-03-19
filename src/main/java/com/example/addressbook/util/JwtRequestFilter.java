@@ -30,8 +30,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             "/api/auth/login",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
-            "swagger-ui/**",
-            "/v3/api-docs/**",
+            "/swagger-ui/",
+            "/v3/api-docs/",
             "/"
     );
 
@@ -52,13 +52,18 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String requestURI = request.getRequestURI();
+        logger.info("Request URI: " + requestURI);
 
-        if (EXCLUDED_URLS.contains(requestURI)) {
-            chain.doFilter(request, response);
-            return;
-        }
+//        for (String excludedUrl : EXCLUDED_URLS) {
+//            if (requestURI.startsWith(excludedUrl)) {
+//                logger.info("Request URI is excluded from authentication: " + requestURI);
+//                chain.doFilter(request, response);
+//                return;
+//            }
+//        }
 
         final String authorizationHeader = request.getHeader("Authorization");
+        logger.info("Authorization Header: " + authorizationHeader);
 
         String email = null;
         String jwt = null;
@@ -66,7 +71,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer "))
             jwt = authorizationHeader.substring(7);
 
-        email = jwtToken.decodeToken(jwt);
+        if (jwt != null) {
+            email = jwtToken.decodeToken(jwt);
+        }
+
         try {
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
