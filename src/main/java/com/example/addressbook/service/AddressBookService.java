@@ -115,6 +115,7 @@ public class AddressBookService implements IAddressBookService {
             addressBook.setFirstName(updatedAddressBookDTO.getFirstName());
             addressBook.setLastName(updatedAddressBookDTO.getLastName());
             addressBook.setAddress(updatedAddressBookDTO.getAddress());
+            System.out.println(updatedAddressBookDTO.getEmail());
             addressBook.setEmail(updatedAddressBookDTO.getEmail());
             addressBook.setPhoneNumber(updatedAddressBookDTO.getPhoneNumber());
             addressBookRepository.save(addressBook);
