@@ -45,6 +45,7 @@ public class UserAuthenticationController {
     }
 
 
+
     /**
      * Endpoint to login a user.
      * @param loginDTO - The LoginDTO object containing login details.

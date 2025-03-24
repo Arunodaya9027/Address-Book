@@ -25,7 +25,7 @@ public class JwtToken {
     Environment env;    // Environment is used to access secret credentials and properties from environment variables.
 
     public static String TOKEN_SECRET;
-    private static long EXPIRATION_TIME = 5 * 60 * 1000;
+    private static long EXPIRATION_TIME = 10 * 60 * 1000;
 
     /**
      * This method is called after the bean is created.
